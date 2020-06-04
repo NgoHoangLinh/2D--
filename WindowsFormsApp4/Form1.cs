@@ -32,6 +32,8 @@ namespace WindowsFormsApp4
         bool WPressed = false, APressed = false, SPressed = false,
             DPressed = false, isReloading = false;
         int reloadProgress = 0;
+        static int shellID_Solo = 0;
+        static int enemyID_Solo = 0;
         Graphics g = null;
         public static Player player, anotherPlayer, playerHost, playerClient;
         public List<Shell> shells = new List<Shell>();
@@ -41,8 +43,14 @@ namespace WindowsFormsApp4
         event MoveDetegate MoveEvent;
         ClientUnit clientUnit = new ClientUnit();
         public static bool isServer = false;
-        Thread thread = null;
+        Thread threadServer = null;
+        Thread threadClient = null;
         public static bool timerBlock = true;
+        public static bool firstConntect = false;
+        public static bool playSolo = false;
+        DateTime time = new DateTime(2020, 7, 13, 0, 1, 0);
+        DateTime time1 = new DateTime(2020, 7, 13, 0, 0, 0);
+        public static ManualResetEvent disconEvt = new ManualResetEvent(false);
 
         public Form1()
         {
@@ -54,12 +62,13 @@ namespace WindowsFormsApp4
                 ControlStyles.UserPaint, true);
 
             UpdateStyles();
-            label1.BackColor = Color.Transparent; // secretly calling Refresh()
+            scoreLabel.BackColor = Color.Transparent; // secretly calling Refresh()
+            anotherPlayerScoreLabel.BackColor = Color.Transparent; // secretly calling Refresh()
         }
 
-        public Enemy createNewEnemy(int ID)
+        public Enemy createNewEnemy(int ID, int randX, int randY, int randBonus, int randXDir, int randYDir)
         {
-            Enemy en = new Enemy(ID);
+            Enemy en = new Enemy(ID, randX, randY, randBonus, randXDir, randYDir);
             MoveEvent += en.move;
             return en;
         }
@@ -74,10 +83,54 @@ namespace WindowsFormsApp4
         {
             if (e.CloseReason == CloseReason.UserClosing)
             {
-                ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Disconnect);
-                thread.Abort();
-                e.Cancel = true;
-                Hide();
+                if (firstConntect)
+                {
+                    try
+                    {
+                        disconEvt.Reset();
+                        ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Disconnect);
+                        disconEvt.WaitOne();
+                        if (isServer)
+                        {
+                            threadServer.Abort();
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+
+
+                    try
+                    {
+                        ClientUnit.thread.Abort();
+                        ClientUnit.socket.Shutdown(SocketShutdown.Both);
+                        ClientUnit.socket.Close();
+                    }
+                    catch
+                    {
+
+                    }
+
+                    try
+                    {
+                        threadClient.Abort();
+
+                        if (isServer)
+                        {
+                            for (int i = 0; i < Server.clients.Count; i++)
+                            {
+                                Server.clients[i].thread.Abort();
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                    e.Cancel = true;
+                }
+                Application.Exit();
             }
         }
 
@@ -87,71 +140,141 @@ namespace WindowsFormsApp4
             {
                 WPressed = true;
             }
-            /*
-            if (e.KeyCode == Keys.A)
-            {
-                APressed = true;
-            }
-            */
             if (e.KeyCode == Keys.S)
             {
                 SPressed = true;
             }
-            /*
-            if (e.KeyCode == Keys.D)
-            {
-                DPressed = true;
-            }
-            */
             if (e.KeyCode == Keys.Space && !isReloading)
             {
-                ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Shoot);
-                isReloading = true;
-                reloadProgress = 0;
+                if (!playSolo)
+                {
+                    ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Shoot);
+                    isReloading = true;
+                    reloadProgress = 0;
+                }
+                else
+                {
+                    shoot(shellID_Solo++, player.ID);
+                    isReloading = true;
+                    reloadProgress = 0;
+                }
+                
             }
         }
 
-        private void serverButton_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e) // играть против игрока
         {
-            serverButton.Enabled = false;
+            startConnectPanel.Enabled = true;
+            startConnectPanel.Visible = true;
+
+            mainPanel.Enabled = false;
+            mainPanel.Visible = false;
+        }
+
+        private void button4_Click(object sender, EventArgs e) //start
+        {
+            startConnectPanel.Enabled = false;
+            startConnectPanel.Visible = false;
+
             isServer = true;
             Server s = new Server();
-            thread = new Thread(s.Main);
-            thread.Start();
+            threadServer = new Thread(s.Main);
+            threadServer.Start();
         }
 
-        private void connectButton_Click(object sender, EventArgs e)
+        private void button5_Click(object sender, EventArgs e)
         {
-            connectButton.Enabled = false;
-            ClientUnit cu = new ClientUnit();
-            Thread thread = new Thread(cu.Main);
-            thread.Start();
-            while (!ClientUnit.connected)
-            {
+            startConnectPanel.Enabled = false;
+            startConnectPanel.Visible = false;
 
-            }
-            if (!serverButton.Enabled)
+            firstConntect = true;
+
+            ClientUnit cu = new ClientUnit();
+            threadClient = new Thread(cu.Main);
+
+            threadClient.Start(textBox2.Text);
+        }
+
+        private void playAIButton_Click(object sender, EventArgs e)
+        {
+            mainPanel.Enabled = false;
+            mainPanel.Visible = false;
+
+            playSolo = true;
+            timerBlock = false;
+
+            player = new Player(0, 50, Resource1.Player1);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (firstConntect)
             {
-                //player = new Player(0, 0, Resource1.Player1);
-                //anotherPlayer = new Player(0, 50, Resource1.Player2);
+                try
+                {
+                    disconEvt.Reset();
+                    ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Disconnect);
+                    disconEvt.WaitOne();
+                    if (isServer)
+                    {
+                        threadServer.Abort();
+                    }
+                }
+                catch
+                {
+
+                }
+
+
+                try
+                {
+                    ClientUnit.thread.Abort();
+                    ClientUnit.socket.Shutdown(SocketShutdown.Both);
+                    ClientUnit.socket.Close();
+                }
+                catch
+                {
+
+                }
+
+                try
+                {
+                    threadClient.Abort();
+
+                    if (isServer)
+                    {
+                        for (int i = 0; i < Server.clients.Count; i++)
+                        {
+                            Server.clients[i].thread.Abort();
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
             }
-            else
-            {
-                //player = new Player(0, 50, Resource1.Player2);
-                //anotherPlayer = new Player(0, 0, Resource1.Player1);
-                serverButton.Enabled = false;
-            }
-            
-            //ClientUnitMain();
+            Application.Exit();
         }
 
         private void timer2_Tick(object sender, EventArgs e)
         {
+            Random random = new Random();
             if (isServer)
             {
                 //enemies.Add(createNewEnemy()); // TODO нужно создавать сервером
-                ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.EnemyCreate);
+                ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.EnemyCreate, " " + random.Next(550, 700) + " " + random.Next(50, 350) + " " + (random.Next(1, 5) * 10) + " " + random.Next(1, 3) + " " + random.Next(1, 3));
             }
+            if (playSolo)
+            {
+                enemies.Add(createNewEnemy(enemyID_Solo++, random.Next(550, 700), random.Next(50, 350), random.Next(1, 5) * 10, random.Next(1, 3), random.Next(1, 3)));
+            }
+            
         }
 
 
@@ -161,27 +284,43 @@ namespace WindowsFormsApp4
             {
                 WPressed = false;
             }
-            /*
-            if (e.KeyCode == Keys.A)
-            {
-                APressed = false;
-            }
-            */
             if (e.KeyCode == Keys.S)
             {
                 SPressed = false;
             }
-            /*
-            if (e.KeyCode == Keys.D)
-            {
-                DPressed = false;
-            }
-            */
         }
-
+        
         private void timer1_Tick(object sender, EventArgs e)
         {
+            if (playSolo)
+            {
+                time = time.AddMilliseconds(-25);
+                if (time.Subtract(time1).TotalMilliseconds >= 0)
+                {
+                    timerLlabel.Text = time.ToString("mm:ss.fffK"); //Subtract(timer).ToString("mm:ss.ffffK");
+                }
+                else
+                {
+                    timerLlabel.Text = time1.ToString("mm:ss.fffK");
+                    timer1.Stop();
+                }
+            }
             
+            if (playSolo && enemies.Count <= 0)
+            {
+                Random random = new Random();
+                enemies.Add(createNewEnemy(enemyID_Solo++, random.Next(550, 700), random.Next(50, 350), random.Next(1, 5) * 10, random.Next(1, 3), random.Next(1, 3)));
+                timer2.Stop();
+                timer2.Start();
+            }
+            if (!playSolo && !firstConntect && Server.serverStarted)
+            {
+                firstConntect = true;
+                ClientUnit cu = new ClientUnit();
+                threadClient = new Thread(cu.Main);
+                //thread.Start(textBox1.Text);
+                threadClient.Start("127.0.0.1");
+            }
             if (!timerBlock)
             {
                 timer2.Start();
@@ -197,20 +336,34 @@ namespace WindowsFormsApp4
             {
                 for (int j = 0; j < enemies.Count; j++)
                 {
-                    if ((shells[i].x + 20 >= enemies[j].x) && (shells[i].x <= enemies[j].x + 20) &&
-                        (shells[i].y + 5 >= enemies[j].y) && (shells[i].y <= enemies[j].y + 20))
+                    try
                     {
-                        
-                        enemies[j].killedBy = shells[i].whoShoot;
-
-                        if(enemies[j].killedBy == 0)
+                        if ((shells[i].x + 20 >= enemies[j].x) && (shells[i].x <= enemies[j].x + 20) &&
+                        (shells[i].y + 5 >= enemies[j].y) && (shells[i].y <= enemies[j].y + 20))
                         {
-                            player.score += enemies[j].killBonus;
-                        }
 
-                        en.Add(enemies[j]);
-                        sh.Add(shells[i]);
+                            enemies[j].killedBy = shells[i].whoShoot;
+
+                            Console.WriteLine("killed by " + enemies[j].killedBy + "                                          player ID " + player.ID);
+
+                            if (enemies[j].killedBy == player.ID)
+                            {
+                                player.score += enemies[j].killBonus;
+                            }
+                            else
+                            {
+                                anotherPlayer.score += enemies[j].killBonus;
+                            }
+
+                            en.Add(enemies[j]);
+                            sh.Add(shells[i]);
+                        }
                     }
+                    catch
+                    {
+                        Console.WriteLine("           !!!!!!!!!! Exception in enemies/shells cycle");
+                    }
+                    
                 }
             }
             if (en.Count > 0)
@@ -218,24 +371,37 @@ namespace WindowsFormsApp4
                 List<int> killedEnemiesIDs = new List<int>();
                 List<int> killedShellsIDs = new List<int>();
 
+                string package = "";
+                
+
                 foreach (Enemy enemy in en)
                 {
                     enemies.Remove(enemy);
                     killedEnemiesIDs.Add(enemy.enemyID);
+                    package += " " + enemy.enemyID + " " + enemy.killedBy;
+
                 }
                 foreach (Shell shell in sh)
                 {
                     shells.Remove(shell);
                     killedShellsIDs.Add(shell.shellID);
+                    package += " " + shell.shellID;
                 }
-                ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.EnemyKilled, killedEnemiesIDs.ToArray(), killedShellsIDs.ToArray());
+                if (!playSolo)
+                {
+                    ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.EnemyKilled, package);
+                }
             }
             /////
             MoveEvent?.Invoke();
 
             if (player != null)
             {
-                label1.Text = player.score.ToString();
+                scoreLabel.Text = player.score.ToString();
+                if(anotherPlayer != null)
+                {
+                    anotherPlayerScoreLabel.Text = anotherPlayer.score.ToString();
+                }
 
                 if (WPressed)
                 {
@@ -257,9 +423,27 @@ namespace WindowsFormsApp4
                     player.x += 10;
                     moveDone = true;
                 }
-                if (moveDone)
+                if (!playSolo && moveDone)
                 {
                     ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.Position);
+                }
+            }
+            if (player != null && anotherPlayer != null)
+            {
+                if (player.score >= 200 && anotherPlayer.score < 200)
+                {
+                    timer1.Stop();
+                    MessageBox.Show("You win! Congratulations!");
+                }
+                if (anotherPlayer.score >= 200 && player.score < 200)
+                {
+                    timer1.Stop();
+                    MessageBox.Show("You lose =(");
+                }
+                if (player.score >= 200 && anotherPlayer.score >= 200)
+                {
+                    timer1.Stop();
+                    MessageBox.Show("Draw");
                 }
             }
             if (isReloading)
@@ -282,36 +466,74 @@ namespace WindowsFormsApp4
             }
 
             g.DrawLine(new Pen(Color.Red), fringle.x1, fringle.y1, fringle.x2, fringle.y2);
-            for(int i = 0; i < shells.Count; i++)
+            try
             {
-                g.FillRectangle(new SolidBrush(Color.Black), shells[i].rectangle);
-                g.DrawString(shells[i].whoShoot.ToString(), new Font("Arial", 13), new SolidBrush(Color.Black), shells[i].x + 10, shells[i].y - 20);
-                if (shells[i].x >= ClientSize.Width)
+                for (int i = 0; i < shells.Count; i++)
                 {
-                    shells.Remove(shells[i]);
-                    Console.WriteLine(shells.Count);
+                    g.FillRectangle(new SolidBrush(Color.Black), shells[i].rectangle);
+                    //g.DrawString(shells[i].whoShoot.ToString(), new Font("Arial", 13), new SolidBrush(Color.Black), shells[i].x + 5, shells[i].y - 20);
+                    if (shells[i].x >= ClientSize.Width)
+                    {
+                        shells.Remove(shells[i]);
+                        Console.WriteLine(shells.Count);
+                    }
                 }
             }
-            for (int i = 0; i < enemies.Count; i++)
+            catch
             {
-                if(enemies[i].x + 20 >= ClientSize.Width)
+
+            }
+            try { 
+                for (int i = 0; i < enemies.Count; i++)
                 {
-                    enemies[i].xDirection = "left";
+                    if (enemies[i].x + 20 >= ClientSize.Width)
+                    {
+                        enemies[i].xDirection = "left";
+                    }
+                    if (enemies[i].x <= fringle.x1)
+                    {
+                        enemies[i].xDirection = "right";
+                    }
+                    if (enemies[i].y + 20 >= ClientSize.Height)
+                    {
+                        enemies[i].yDirection = "up";
+                    }
+                    if (enemies[i].y <= 0)
+                    {
+                        enemies[i].yDirection = "down";
+                    }
+                    Brush brush;
+                    Brush pen;
+                    switch (enemies[i].speed)
+                    {
+                        case 1:
+                            brush = new SolidBrush(Color.Black);
+                            pen = new SolidBrush(Color.White);
+                            break;
+                        case 2:
+                            brush = new SolidBrush(Color.Red);
+                            pen = new SolidBrush(Color.Blue);
+                            break;
+                        case 3:
+                            brush = new SolidBrush(Color.Yellow);
+                            pen = new SolidBrush(Color.Green);
+                            break;
+                        case 4:
+                            brush = new SolidBrush(Color.Green);
+                            pen = new SolidBrush(Color.Yellow);
+                            break;
+                        default:
+                            brush = new SolidBrush(Color.Purple);
+                            pen = new SolidBrush(Color.White);
+                            break;
+                    }
+                    g.FillRectangle(brush, enemies[i].rect);
+                    g.DrawString(enemies[i].enemyID.ToString(), new Font("Arial", 13), pen, enemies[i].x, enemies[i].y);
                 }
-                if(enemies[i].x <= fringle.x1)
-                {
-                    enemies[i].xDirection = "right";
-                }
-                if (enemies[i].y + 20 >= ClientSize.Height)
-                {
-                    enemies[i].yDirection = "up";
-                }
-                if (enemies[i].y <= 0)
-                {
-                    enemies[i].yDirection = "down";
-                }
-                g.FillRectangle(new SolidBrush(Color.Black), enemies[i].rect);
-                g.DrawString(enemies[i].enemyID.ToString(), new Font("Arial", 13), new SolidBrush(Color.Black), enemies[i].x + 10, enemies[i].y - 20);
+            }
+            catch
+            {
+
             }
 
 

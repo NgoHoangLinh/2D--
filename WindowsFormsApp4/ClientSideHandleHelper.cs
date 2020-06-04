@@ -15,19 +15,25 @@ namespace WindowsFormsApp4
         public void HandleReceive(object o)
         {
 
-            ClientStateObject state;
+            ClientStateObject state = new ClientStateObject();
             Socket handler = (Socket)o;
-            
+            state.workSocket = handler;
+
             while (true)
             {
                 receiveDone.Reset();
-                state = new ClientStateObject();
-                state.workSocket = handler;
-                Console.WriteLine("                                  HandleReceive loop" + handler.RemoteEndPoint.ToString());
-                handler.BeginReceive(state.buffer, 0, ClientStateObject.BufferSize, 0,
+               
+                Console.WriteLine("               Client Side                   HandleReceive loop" + handler.RemoteEndPoint.ToString());
+                try
+                {
+                    handler.BeginReceive(state.buffer, 0, ClientStateObject.BufferSize, 0,
                     new AsyncCallback(ClientUnit.ReceiveCallback), state);
-                receiveDone.WaitOne();
+                }
+                catch
+                {
 
+                }
+                receiveDone.WaitOne();
             }
 
         }

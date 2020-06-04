@@ -12,17 +12,17 @@ namespace WindowsFormsApp4
     {
         public ManualResetEvent receiveDone = new ManualResetEvent(false);
 
-        public void HandleReceive(object o)
+        public void HandleReceive(object o) //метод получающий сообщения от конкретного клиента
         {
-
-            StateObject state = new StateObject();
             Socket handler = (Socket)o;
+            StateObject state = new StateObject();
             state.workSocket = handler;
+
             while (true)
             {
                 receiveDone.Reset();
 
-                Console.WriteLine("HandleReceive loop" + handler.RemoteEndPoint.ToString());
+                Console.WriteLine("                    HandleReceive loop " + handler.RemoteEndPoint.ToString());
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                     new AsyncCallback(Server.ReadCallback), state);
                 receiveDone.WaitOne();

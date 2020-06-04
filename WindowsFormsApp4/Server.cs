@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,9 @@ namespace WindowsFormsApp4
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        static List<Client> clients = new List<Client>();
+        public static bool serverStarted = false;
+
+        public static List<Client> clients = new List<Client>();
         static Random random = new Random();
 
         static int enemyID = 0;
@@ -32,16 +35,35 @@ namespace WindowsFormsApp4
         }
         public static void StartListening()
         {
+            /*
+            // Data buffer for incoming data.
+            byte[] bytes = new Byte[1024];
+
+            // Establish the local endpoint for the socket.
+            // The DNS name of the computer
+            // running the listener is "host.contoso.com".
+            IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+            IPAddress ipAddress = ipHostInfo.AddressList[0];
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+
+            // Create a TCP/IP socket.
+            Socket socket = new Socket(AddressFamily.InterNetwork,
+                SocketType.Stream, ProtocolType.Tcp);
+            */
+
+
+
             Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             //Console.Title = "Server";
 
             try
             {
-                socket.Bind(new IPEndPoint(IPAddress.Any, 2048));
+                socket.Bind(new IPEndPoint(IPAddress.Any, 2048));  //создаёт точку подключения
+                //socket.Bind(localEndPoint);  //создаёт точку подключения
                 socket.Listen(2);
 
-                while (true)
+                while (true) //проходит цикл при новом подключении
                 {
                     // Set the event to nonsignaled state.
                     allDone.Reset();
@@ -49,11 +71,12 @@ namespace WindowsFormsApp4
                     // Start an asynchronous socket to listen for connections.
                     Console.WriteLine("Waiting for a connection...");
                     socket.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
-                        socket);
+                        new AsyncCallback(AcceptCallback), socket); //начинаем принимать входящие подключения
 
                     // Wait until a connection is made before continuing.
-                    allDone.WaitOne();
+
+                    serverStarted = true;
+                    allDone.WaitOne(); //усыпляет поток
                 }
 
             }
@@ -62,7 +85,7 @@ namespace WindowsFormsApp4
                 Console.WriteLine(e.ToString());
             }
         }
-        public static void AcceptCallback(IAsyncResult ar)
+        public static void AcceptCallback(IAsyncResult ar) //выполняется при новом подключнии
         {
             //////////////////////////////////////////////////////////////////////////////////////////////
             // Signal the main thread to continue.
@@ -71,13 +94,14 @@ namespace WindowsFormsApp4
 
             // Get the socket that handles the client request.
             Socket listener = (Socket)ar.AsyncState;
+
+            //Сокет удалённого подключения
             Socket handler = listener.EndAccept(ar);
 
-            // Create the state object.
+            // Create the state object. Нужен для сохранения информации о клиенте и его сообщении
             StateObject state = new StateObject();
             state.workSocket = handler;
-            //handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-            //    new AsyncCallback(ReadCallback), state);
+            
             Client client = new Client(handler);
 
             HandleClientHelper a = new HandleClientHelper();
@@ -88,8 +112,10 @@ namespace WindowsFormsApp4
             client.deleteStatus = false;
             clients.Add(client);
             thread.Start(handler);
+
         }
-        public static void ReadCallback(IAsyncResult ar)
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public static void ReadCallback(IAsyncResult ar) //выполняет считывание сообщения. Входядий параметр - StateObject
         {
             String content = String.Empty;
 
@@ -98,27 +124,42 @@ namespace WindowsFormsApp4
             StateObject state = (StateObject)ar.AsyncState;
             Socket handler = state.workSocket;
 
-            foreach (Client c in clients)
+            int bytesRead;
+            try //отлавливает ошибку с сокетом. Внутри выполняется извлечение сообщения
             {
-                if (c.socket.RemoteEndPoint == handler.RemoteEndPoint)
+                foreach (Client c in clients)
                 {
-                    c.a.receiveDone.Set();
+                    if (c.socket.RemoteEndPoint == handler.RemoteEndPoint)
+                    {
+                        c.a.receiveDone.Set(); //выводим из сна поток, обрабатывающий сообщения он конкретного клиента (handler)
+                    }
                 }
+                // Read data from the client socket. 
+                bytesRead = handler.EndReceive(ar);
             }
-
-            // Read data from the client socket. 
-            int bytesRead = handler.EndReceive(ar);
+            catch
+            {
+                foreach (Client c in clients)
+                {
+                    if (c.socket == handler)
+                    {
+                        Console.WriteLine("Abort " + handler.RemoteEndPoint.ToString());
+                        c.thread.Abort(); //прерываем поток
+                        c.deleteStatus = true;
+                    }
+                }
+                return;
+            }
+            
 
             if (bytesRead > 0)
             {
-                state.sb.Clear();
-                // There  might be more data, so store the data received so far.
+                state.sb.Clear(); //очищает стоку StringBuilder в StateObject 
+                Console.WriteLine("*******************************Text before append: " + state.sb.ToString());
                 state.sb.Append(Encoding.ASCII.GetString(
-                    state.buffer, 0, bytesRead));
+                    state.buffer, 0, bytesRead)); //в строку StringBuilder записываем входящее сообщение
 
-                // Check for end-of-file tag. If it is not there, read 
-                // more data.
-                content = state.sb.ToString();
+                content = state.sb.ToString(); //записываем сообщение из StringBuilder в String
 
                 if (content == "<END>")
                 {
@@ -128,6 +169,7 @@ namespace WindowsFormsApp4
                         {
                             Console.WriteLine("Abort " + handler.RemoteEndPoint.ToString());
                             c.thread.Abort();
+
                             c.deleteStatus = true;
                         }
                     }
@@ -248,16 +290,10 @@ namespace WindowsFormsApp4
                         Send(c.socket, content);
                     }
                     */
+                    int shooterID = clients.Find(c => c.socket == handler).ID;
                     foreach (Client c in clients)
                     {
-                        if (c.socket != handler)
-                        {
-                            Send(c.socket, content + " 1 " + shellID);
-                        }
-                        else
-                        {
-                            Send(c.socket, content + " 0 " + shellID);
-                        }
+                        Send(c.socket, content + " " + shooterID + " " + shellID);
                     }
                     shellID++;
                 }
@@ -277,7 +313,10 @@ namespace WindowsFormsApp4
                     */
                     foreach (Client c in clients)
                     {
-                        Send(c.socket, content);
+                        if (c.socket != handler)
+                        {
+                            Send(c.socket, content);
+                        }
                     }
                 }
                 else if (content.IndexOf("<EOF>") > -1)
