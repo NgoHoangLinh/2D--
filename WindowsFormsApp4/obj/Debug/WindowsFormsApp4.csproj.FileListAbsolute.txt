@@ -17,4 +17,3 @@ C:\Users\avaryvonchyk\Downloads\GitProjects\2D--\WindowsFormsApp4\obj\Debug\Wind
 C:\Users\avaryvonchyk\Downloads\GitProjects\2D--\WindowsFormsApp4\obj\Debug\WindowsFormsApp4.csproj.GenerateResource.cache
 C:\Users\avaryvonchyk\Downloads\GitProjects\2D--\WindowsFormsApp4\obj\Debug\WindowsFormsApp4.exe
 C:\Users\avaryvonchyk\Downloads\GitProjects\2D--\WindowsFormsApp4\obj\Debug\WindowsFormsApp4.pdb
-C:\Users\avaryvonchyk\Downloads\GitProjects\2D--\WindowsFormsApp4\obj\Debug\WindowsFormsApp4.csprojAssemblyReference.cache

@@ -50,7 +50,7 @@ namespace WindowsFormsApp4
                     this.yDirection = "down";
                     break;
             }
-            this.killBonus = killBonus; //TODO need to depend on type of enemy
+            this.killBonus = killBonus;
             speed = killBonus / 10;
         }
         public void move()

@@ -553,21 +553,16 @@ namespace WindowsFormsApp4
 
             }
 
-
-            if (isReloading)
+            g.DrawRectangle(new Pen(Color.Black), new Rectangle(0, 0, 80, 10));
+            if (reloadProgress < 80)
             {
-                g.DrawRectangle(new Pen(Color.Black), new Rectangle(0, 0, 80, 10));
+                isReloading = true;
                 g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(0, 0, reloadProgress, 10));
-                
-                if(reloadProgress >= 80)
-                {
-                    isReloading = false;
-                }
             }
             else
             {
+                isReloading = false;
                 g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(0, 0, reloadProgress, 10));
-                g.DrawRectangle(new Pen(Color.Black), new Rectangle(0, 0, 80, 10));
             }
         }
         public void shoot(int ID, int whoShoot)
