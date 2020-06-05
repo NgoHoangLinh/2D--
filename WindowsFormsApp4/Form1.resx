@@ -123,6 +123,18 @@
   <metadata name="timer2.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>104, 17</value>
   </metadata>
+  <data name="rulesTextBox.Text" xml:space="preserve">
+    <value>Для сетевой игры:
+1. Необходило набрать 200 или более очков быстрее оппонента.
+2. Количество очков, начисляемых за убитого врага, зависит от цвета
+Чёрный -&gt; 10 очков
+Красный -&gt; 20 очков
+Жёлтый -&gt; 30 очков
+Зелёный -&gt; 40 очков
+
+Для одиночного режима:
+Необходимо за 60 секунд набрать максимально возможное колличество очков</value>
+  </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>25</value>
   </metadata>

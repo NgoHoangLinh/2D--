@@ -179,7 +179,7 @@ namespace WindowsFormsApp4
             isServer = true;
             Server s = new Server();
             threadServer = new Thread(s.Main);
-            threadServer.Start();
+            threadServer.Start(portTextBox1.Text);
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -192,7 +192,7 @@ namespace WindowsFormsApp4
             ClientUnit cu = new ClientUnit();
             threadClient = new Thread(cu.Main);
 
-            threadClient.Start(textBox2.Text);
+            threadClient.Start(textBox2.Text + " " + portTextBox1.Text);
         }
 
         private void playAIButton_Click(object sender, EventArgs e)
@@ -204,6 +204,24 @@ namespace WindowsFormsApp4
             timerBlock = false;
 
             player = new Player(0, 50, Resource1.Player1);
+        }
+
+        private void toRulesPanelButton_Click(object sender, EventArgs e)
+        {
+            mainPanel.Enabled = false;
+            mainPanel.Visible = false;
+
+            rulesPanel.Enabled = true;
+            rulesPanel.Visible = true;
+        }
+
+        private void backToMainButton_Click(object sender, EventArgs e)
+        {
+            rulesPanel.Enabled = false;
+            rulesPanel.Visible = false;
+
+            mainPanel.Enabled = true;
+            mainPanel.Visible = true;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -267,7 +285,6 @@ namespace WindowsFormsApp4
             Random random = new Random();
             if (isServer)
             {
-                //enemies.Add(createNewEnemy()); // TODO нужно создавать сервером
                 ClientUnit.Send(ClientUnit.socket, ClientUnit.PacketInfo.EnemyCreate, " " + random.Next(550, 700) + " " + random.Next(50, 350) + " " + (random.Next(1, 5) * 10) + " " + random.Next(1, 3) + " " + random.Next(1, 3));
             }
             if (playSolo)
@@ -297,7 +314,7 @@ namespace WindowsFormsApp4
                 time = time.AddMilliseconds(-25);
                 if (time.Subtract(time1).TotalMilliseconds >= 0)
                 {
-                    timerLlabel.Text = time.ToString("mm:ss.fffK"); //Subtract(timer).ToString("mm:ss.ffffK");
+                    timerLlabel.Text = time.ToString("mm:ss.fffK");
                 }
                 else
                 {
@@ -319,7 +336,7 @@ namespace WindowsFormsApp4
                 ClientUnit cu = new ClientUnit();
                 threadClient = new Thread(cu.Main);
                 //thread.Start(textBox1.Text);
-                threadClient.Start("127.0.0.1");
+                threadClient.Start(textBox2.Text + " " + portTextBox1.Text);
             }
             if (!timerBlock)
             {
@@ -471,7 +488,7 @@ namespace WindowsFormsApp4
                 for (int i = 0; i < shells.Count; i++)
                 {
                     g.FillRectangle(new SolidBrush(Color.Black), shells[i].rectangle);
-                    //g.DrawString(shells[i].whoShoot.ToString(), new Font("Arial", 13), new SolidBrush(Color.Black), shells[i].x + 5, shells[i].y - 20);
+
                     if (shells[i].x >= ClientSize.Width)
                     {
                         shells.Remove(shells[i]);

@@ -42,28 +42,28 @@ namespace WindowsFormsApp4
 
         public void Main(object o)
         {
-            StartClient((string)o);
+            string s = (string)o;
+            string[] s1 = s.Split(' ');
+            StartClient(s1[0], Int32.Parse(s1[1]));
         }
 
-        private static void StartClient(string hostIP) //127.0.0.1
+        private static void StartClient(string hostIP, int port)
         {
-            /*
-            IPHostEntry ipHostInfo = Dns.Resolve("host.contoso.com");
-            IPAddress ipAddress = ipHostInfo.AddressList[0];
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+            //IPHostEntry ipHostInfo = Dns.GetHostEntry(hostIP);
+            //IPAddress ipAddress = ipHostInfo.AddressList[0];
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(hostIP), port);
 
             // Create a TCP/IP socket.
             socket = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
 
-            */
 
-            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            //socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             Console.WriteLine("Подключение к серверу...");
 
-            socket.BeginConnect(hostIP, 2048, new AsyncCallback(ConnectCallback), socket);
-            //socket.BeginConnect(remoteEP, new AsyncCallback(ConnectCallback), socket);
+            //socket.BeginConnect(hostIP, 2048, new AsyncCallback(ConnectCallback), socket);
+            socket.BeginConnect(remoteEP, new AsyncCallback(ConnectCallback), socket);
 
             connectDone.WaitOne();
 
@@ -102,23 +102,6 @@ namespace WindowsFormsApp4
                 // Signal that the connection has been made.
                 connected = true;
                 connectDone.Set();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-        }
-        private static void Receive(Socket client)
-        {
-            try
-            {
-                // Create the state object.
-                ClientStateObject state = new ClientStateObject();
-                state.workSocket = client;
-
-                // Begin receiving the data from the remote device.
-                client.BeginReceive(state.buffer, 0, ClientStateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveCallback), state);
             }
             catch (Exception e)
             {

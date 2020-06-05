@@ -20,7 +20,7 @@ namespace WindowsFormsApp4
 
         public static List<Client> clients = new List<Client>();
         static Random random = new Random();
-
+        static int port;
         static int enemyID = 0;
         static int shellID = 0;
 
@@ -30,36 +30,46 @@ namespace WindowsFormsApp4
         }
         public void Main(object o)
         {
+            port = Int32.Parse((string)o);
             StartListening();
             Console.ReadLine();
         }
         public static void StartListening()
         {
-            /*
+            
             // Data buffer for incoming data.
             byte[] bytes = new Byte[1024];
 
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
-            IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-            IPAddress ipAddress = ipHostInfo.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+            //IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());//Dns.GetHostName());
+            
+            //IPAddress ipAddress = ipHostInfo.AddressList[0];
+            //Console.WriteLine(ipAddress);
+            //IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 11000);
 
             // Create a TCP/IP socket.
             Socket socket = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
-            */
+
+            IPAddress[] localIPs = Dns.GetHostAddresses(Dns.GetHostName());
+            foreach(IPAddress ip in localIPs)
+            {
+                if(ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    Console.WriteLine(ip.ToString());
+                }
+            }
 
 
-
-            Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            //Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             //Console.Title = "Server";
 
             try
             {
-                socket.Bind(new IPEndPoint(IPAddress.Any, 2048));  //создаёт точку подключения
+                socket.Bind(new IPEndPoint(IPAddress.Any, port));  //создаёт точку подключения
                 //socket.Bind(localEndPoint);  //создаёт точку подключения
                 socket.Listen(2);
 
@@ -188,7 +198,7 @@ namespace WindowsFormsApp4
                     handler.Close();
 
                 }
-                else if (content.Contains("<MESSAGE>"))
+                else if (content.Contains("<MESSAGE>")) //<MESSAGE> RESEIVER23124 X Y SENDER123123
                 {
                     // All the data has been read from the 
                     // client. Display it on the console.
@@ -208,7 +218,7 @@ namespace WindowsFormsApp4
                         
                     }
                 }
-                else if (content.StartsWith("0"))
+                else if (content.StartsWith("0")) //0 клиент запросил id
                 {
                     // All the data has been read from the 
                     // client. Display it on the console.
@@ -223,12 +233,12 @@ namespace WindowsFormsApp4
                     {
                         if (c.socket != handler)
                         {
-                            Send(c.socket, "1 " + id);
+                            Send(c.socket, "1 " + id);//1 newAnotherPlayerID
                         }
                         else
                         {
                             c.ID = id;
-                            Send(c.socket, "0 " + id);
+                            Send(c.socket, "0 " + id); //0 newID
                         }
                     }
 
@@ -241,12 +251,7 @@ namespace WindowsFormsApp4
                         content.Length, content);
                     // Echo the data back to the client.
                     Console.WriteLine("Received from " + handler.RemoteEndPoint.ToString());
-                    /*
-                    foreach(Client c in clients)
-                    {
-                        Send(c.socket, content);
-                    }
-                    */
+
                     foreach (Client c in clients)
                     {
                         if (c.socket != handler)
@@ -264,12 +269,7 @@ namespace WindowsFormsApp4
                         content.Length, content);
                     // Echo the data back to the client.
                     Console.WriteLine("Received from " + handler.RemoteEndPoint.ToString());
-                    /*
-                    foreach(Client c in clients)
-                    {
-                        Send(c.socket, content);
-                    }
-                    */
+
                     foreach (Client c in clients)
                     {
                         Send(c.socket, content + " " + enemyID);
@@ -284,12 +284,7 @@ namespace WindowsFormsApp4
                         content.Length, content);
                     // Echo the data back to the client.
                     Console.WriteLine("Received from " + handler.RemoteEndPoint.ToString());
-                    /*
-                    foreach(Client c in clients)
-                    {
-                        Send(c.socket, content);
-                    }
-                    */
+                    
                     int shooterID = clients.Find(c => c.socket == handler).ID;
                     foreach (Client c in clients)
                     {
@@ -305,12 +300,7 @@ namespace WindowsFormsApp4
                         content.Length, content);
                     // Echo the data back to the client.
                     Console.WriteLine("Received from " + handler.RemoteEndPoint.ToString());
-                    /*
-                    foreach(Client c in clients)
-                    {
-                        Send(c.socket, content);
-                    }
-                    */
+                    
                     foreach (Client c in clients)
                     {
                         if (c.socket != handler)
@@ -318,16 +308,6 @@ namespace WindowsFormsApp4
                             Send(c.socket, content);
                         }
                     }
-                }
-                else if (content.IndexOf("<EOF>") > -1)
-                {
-                    // All the data has been read from the 
-                    // client. Display it on the console.
-                    Console.WriteLine("Read {0} bytes from socket. \n Data : {1}",
-                        content.Length, content);
-                    // Echo the data back to the client.
-                    Send(handler, content);
-
                 }
                 else
                 {
@@ -358,14 +338,6 @@ namespace WindowsFormsApp4
                 // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
                 Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-
-                /*
-                handler.Shutdown(SocketShutdown.Both);
-                
-                handler.Close();
-                */
-
-
 
             }
             catch (Exception e)
