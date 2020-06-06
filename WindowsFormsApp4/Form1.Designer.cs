@@ -44,7 +44,7 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
+            this.exitButton2 = new System.Windows.Forms.Button();
             this.timerLlabel = new System.Windows.Forms.Label();
             this.anotherPlayerScoreLabel = new System.Windows.Forms.Label();
             this.rulesPanel = new System.Windows.Forms.Panel();
@@ -52,6 +52,7 @@
             this.rulesLabel = new System.Windows.Forms.Label();
             this.backToMainButton = new System.Windows.Forms.Button();
             this.toRulesPanelButton = new System.Windows.Forms.Button();
+            this.refreshButton = new System.Windows.Forms.Button();
             this.mainPanel.SuspendLayout();
             this.startConnectPanel.SuspendLayout();
             this.rulesPanel.SuspendLayout();
@@ -75,7 +76,6 @@
             this.scoreLabel.Name = "scoreLabel";
             this.scoreLabel.Size = new System.Drawing.Size(62, 23);
             this.scoreLabel.TabIndex = 0;
-            this.scoreLabel.Text = "000";
             this.scoreLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // mainPanel
@@ -168,36 +168,36 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(89, 170);
+            this.button5.Location = new System.Drawing.Point(58, 170);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.Size = new System.Drawing.Size(106, 23);
             this.button5.TabIndex = 1;
             this.button5.TabStop = false;
-            this.button5.Text = "Connect";
+            this.button5.Text = "Подключиться";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(89, 70);
+            this.button4.Location = new System.Drawing.Point(58, 70);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(75, 23);
             this.button4.TabIndex = 0;
             this.button4.TabStop = false;
-            this.button4.Text = "Start";
+            this.button4.Text = "Начать";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
-            // button2
+            // exitButton2
             // 
-            this.button2.Location = new System.Drawing.Point(391, 12);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(70, 20);
-            this.button2.TabIndex = 5;
-            this.button2.TabStop = false;
-            this.button2.Text = "Exit";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.exitButton2.Location = new System.Drawing.Point(391, 12);
+            this.exitButton2.Name = "exitButton2";
+            this.exitButton2.Size = new System.Drawing.Size(70, 20);
+            this.exitButton2.TabIndex = 5;
+            this.exitButton2.TabStop = false;
+            this.exitButton2.Text = "Выход";
+            this.exitButton2.UseVisualStyleBackColor = true;
+            this.exitButton2.Click += new System.EventHandler(this.button2_Click);
             // 
             // timerLlabel
             // 
@@ -215,7 +215,6 @@
             this.anotherPlayerScoreLabel.Name = "anotherPlayerScoreLabel";
             this.anotherPlayerScoreLabel.Size = new System.Drawing.Size(62, 23);
             this.anotherPlayerScoreLabel.TabIndex = 7;
-            this.anotherPlayerScoreLabel.Text = "000";
             this.anotherPlayerScoreLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // rulesPanel
@@ -270,15 +269,27 @@
             this.toRulesPanelButton.UseVisualStyleBackColor = true;
             this.toRulesPanelButton.Click += new System.EventHandler(this.toRulesPanelButton_Click);
             // 
+            // refreshButton
+            // 
+            this.refreshButton.Location = new System.Drawing.Point(300, 12);
+            this.refreshButton.Name = "refreshButton";
+            this.refreshButton.Size = new System.Drawing.Size(74, 20);
+            this.refreshButton.TabIndex = 8;
+            this.refreshButton.TabStop = false;
+            this.refreshButton.Text = "Заново";
+            this.refreshButton.UseVisualStyleBackColor = true;
+            this.refreshButton.Click += new System.EventHandler(this.button1_Click_1);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 407);
             this.Controls.Add(this.mainPanel);
-            this.Controls.Add(this.rulesPanel);
             this.Controls.Add(this.startConnectPanel);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.rulesPanel);
+            this.Controls.Add(this.exitButton2);
+            this.Controls.Add(this.refreshButton);
             this.Controls.Add(this.scoreLabel);
             this.Controls.Add(this.anotherPlayerScoreLabel);
             this.Controls.Add(this.timerLlabel);
@@ -311,7 +322,7 @@
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button exitButton2;
         public System.Windows.Forms.Label timerLlabel;
         public System.Windows.Forms.Label anotherPlayerScoreLabel;
         private System.Windows.Forms.TextBox portTextBox1;
@@ -322,6 +333,7 @@
         private System.Windows.Forms.Label rulesLabel;
         private System.Windows.Forms.Button backToMainButton;
         private System.Windows.Forms.Button toRulesPanelButton;
+        private System.Windows.Forms.Button refreshButton;
     }
 }
 

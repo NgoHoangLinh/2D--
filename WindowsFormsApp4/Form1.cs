@@ -48,8 +48,8 @@ namespace WindowsFormsApp4
         public static bool timerBlock = true;
         public static bool firstConntect = false;
         public static bool playSolo = false;
-        DateTime time = new DateTime(2020, 7, 13, 0, 1, 0);
-        DateTime time1 = new DateTime(2020, 7, 13, 0, 0, 0);
+        DateTime time;
+        DateTime time1;
         public static ManualResetEvent disconEvt = new ManualResetEvent(false);
 
         public Form1()
@@ -197,6 +197,9 @@ namespace WindowsFormsApp4
 
         private void playAIButton_Click(object sender, EventArgs e)
         {
+            time = new DateTime(2020, 7, 13, 0, 1, 0);
+            time1 = new DateTime(2020, 7, 13, 0, 0, 0);
+
             mainPanel.Enabled = false;
             mainPanel.Visible = false;
 
@@ -222,6 +225,22 @@ namespace WindowsFormsApp4
 
             mainPanel.Enabled = true;
             mainPanel.Visible = true;
+        }
+
+        private void button1_Click_1(object sender, EventArgs e) //Refresh button
+        {
+            scoreLabel.Focus();
+
+            time = new DateTime(2020, 7, 13, 0, 1, 0);
+            time1 = new DateTime(2020, 7, 13, 0, 0, 0);
+
+            shells = new List<Shell>();
+            enemies = new List<Enemy>();
+
+            timer1.Start();
+            timer2.Start();
+
+            player = new Player(0, 50, Resource1.Player1);
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -309,6 +328,15 @@ namespace WindowsFormsApp4
         
         private void timer1_Tick(object sender, EventArgs e)
         {
+
+            if (playSolo && enemies.Count <= 0)
+            {
+                Random random = new Random();
+                enemies.Add(createNewEnemy(enemyID_Solo++, random.Next(550, 700), random.Next(50, 350), random.Next(1, 5) * 10, random.Next(1, 3), random.Next(1, 3)));
+                timer2.Stop();
+                timer2.Start();
+            }
+
             if (playSolo)
             {
                 time = time.AddMilliseconds(-25);
@@ -320,16 +348,10 @@ namespace WindowsFormsApp4
                 {
                     timerLlabel.Text = time1.ToString("mm:ss.fffK");
                     timer1.Stop();
+                    timer2.Stop();
                 }
             }
             
-            if (playSolo && enemies.Count <= 0)
-            {
-                Random random = new Random();
-                enemies.Add(createNewEnemy(enemyID_Solo++, random.Next(550, 700), random.Next(50, 350), random.Next(1, 5) * 10, random.Next(1, 3), random.Next(1, 3)));
-                timer2.Stop();
-                timer2.Start();
-            }
             if (!playSolo && !firstConntect && Server.serverStarted)
             {
                 firstConntect = true;
